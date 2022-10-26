@@ -21,4 +21,4 @@ if __name__ == "__main__":
 
     H, el, az, binArea = glyph.histogram2d(sph,bins=[100,200],norm='prob_binArea', weights=sph_lin)
 
-    glyph.get_glyph(H,el,az,plot=True,savePath=None)
+    glyph.save_glyph(H,el,az,savePath="test.vtk")

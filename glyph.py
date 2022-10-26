@@ -1,7 +1,8 @@
 import numpy as np
-import vtk
-from mayavi import mlab
+# import vtk
+# from mayavi import mlab
 import os
+import vtk_write_lite
 
 def cart2sph(cart):
     """Performs a conversion from carthesian to sperical coordinates, mimics matlab function with the same name\n
@@ -92,13 +93,12 @@ def histogram2d(sph:np.array, bins=[100,200], norm=None, weights=None):
 
     return H, el, az, binArea
 
-def get_glyph(H,el,az,plot=True,savePath=None):
+def save_glyph(H,el,az,savePath):
     """Creates glyph-like mesh visualization from the 2d spherical coordinate eigenvector histogram\n
     Params\n
     H - histogram values\n
     el, az - binning limits in elevation and azimuth direction\n
-    plot - if True, plots the glyph mesh during the program execution\n
-    savePath - if provided, saves the glyph as .stl file.
+    savePath - path where the .vtk file of the glyph surface should be saved.
     """
 
     el_center = (el[1:]+el[:-1])/2
@@ -108,25 +108,34 @@ def get_glyph(H,el,az,plot=True,savePath=None):
     y1 = H.transpose()*np.cos(el_center_grid)*np.sin(az_center_grid)
     z1 = H.transpose()*np.sin(el_center_grid)
 
-    if not plot:
-        mlab.options.offscreen = True
-    surf = mlab.mesh(x1,y1,z1,scalars=H.transpose())
-    if plot:
-        mlab.show()
+    # Save as vtk surf
+    assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
+    _, ext = os.path.splitext(savePath)
+    assert ext == '.vtk', f"File extension ({ext}) is not .vtk"
+
+    vtk_write_lite.save_surf2vtk(savePath, x1, y1, z1)
+    
+    
+    ### DISABLED MAYAVI VERSION AS IT REQUIRES OPENGL AND A DISPLAY - PROBLEMATIC WITH HPC
+    # if not plot:
+    #     mlab.options.offscreen = True
+    # surf = mlab.mesh(x1,y1,z1,scalars=H.transpose())
+    # if plot:
+    #     mlab.show()
 
 
-    if savePath is not None:
-        assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
-        _, ext = os.path.splitext(savePath)
-        assert ext == '.stl', f"File extension ({ext}) is not .stl"
+    # if savePath is not None:
+    #     assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
+    #     _, ext = os.path.splitext(savePath)
+    #     assert ext == '.stl', f"File extension ({ext}) is not .stl"
 
 
-        surface_vtk = mlab.pipeline.get_vtk_src(surf)
-        stlWriter = vtk.vtkSTLWriter()
-        # Set the file name
-        stlWriter.SetFileName(savePath)
-        # Set the input for the stl writer. surface.output[0]._vtk_obj is a polydata object
-        stlWriter.SetInputData(surface_vtk[0]._vtk_obj)
-        stlWriter.Write()
+    #     surface_vtk = mlab.pipeline.get_vtk_src(surf)
+    #     stlWriter = vtk.vtkSTLWriter()
+    #     # Set the file name
+    #     stlWriter.SetFileName(savePath)
+    #     # Set the input for the stl writer. surface.output[0]._vtk_obj is a polydata object
+    #     stlWriter.SetInputData(surface_vtk[0]._vtk_obj)
+    #     stlWriter.Write()
 
-    return surf
+    # return surf
