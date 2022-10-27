@@ -33,7 +33,7 @@ class ScaleSpace:
         scaleIdx = np.zeros(self.volume.shape, dtype=np.int8)
         #array with boolean swap indices
         swapIdx = np.empty((3,)+self.volume.shape, dtype=bool)
-        print(f"Initialization finished, starting scale space strucutre tensor calculation.")
+        print(f"Initialization finished, starting scale space structure tensor calculation.")
         
         for i in range(self.scales_num):
             t0 = time.time()

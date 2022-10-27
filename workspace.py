@@ -1,7 +1,8 @@
+import os
+
 import numpy as np
 import skimage.io 
 import matplotlib.pyplot as plt
-
 
 from scale_space import ScaleSpace
 import glyph
@@ -9,11 +10,14 @@ import glyph
 
 if __name__ == "__main__":
 
-    I = skimage.io.imread('../Cheese/Scans/Anders_first_scans/rockwool/HU0507G_4X-80kV-Ai-10W-5s_recon_cut-300-500.tif')
+    I = skimage.io.imread('/work3/papi/Cheese/cheese_10X-40kV-air-45s_recon_cut.tif')
     I = (I.astype('float')/np.max(I))*255
-    I = I[:,200:400:,200:400].astype(float)
+    # I = I[:200,:200,:200].astype(float)
 
-    tensorScaleSpace = ScaleSpace(I,sigma_scales=[2,3,4],rho_scales=[1,2,3])
+    print(f"Image size: {I.shape}")
+
+    # tensorScaleSpace = ScaleSpace(I,sigma_scales=[1,2,4,8,16],rho_scales=[1,2,4,8,16])
+    tensorScaleSpace = ScaleSpace(I,sigma_scales=[1,2,4,8],rho_scales=[1,2,4,8])
 
     val,vec,lin,scale = tensorScaleSpace.calcFast()
 
@@ -21,4 +25,6 @@ if __name__ == "__main__":
 
     H, el, az, binArea = glyph.histogram2d(sph,bins=[100,200],norm='prob_binArea', weights=sph_lin)
 
-    glyph.save_glyph(H,el,az,savePath="test.vtk")
+    glyph.save_glyph(H,el,az,savePath="/work3/papi/Cheese/test.vtk")
+
+    print("Done")
