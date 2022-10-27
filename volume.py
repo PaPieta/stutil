@@ -1,6 +1,7 @@
 import numpy as np
 import vtk_write_lite
 import os
+import tifffile
 
 #TODO: update documentation
 
@@ -49,7 +50,7 @@ def hsv2rgb3d(vol):
 
     return np.array([R,G,B])
 
-def convertToColormap(vec, savePath=None):
+def convertToColormap(vec):
     """Converts a volume of vectors to a volume of rgba values representing vector directions."""
 
     fake_hsv = np.arctan2(vec[1,:,:],vec[2,:,:])+np.pi
@@ -57,12 +58,33 @@ def convertToColormap(vec, savePath=None):
 
     fake_rgb = hsv2rgb3d(fake_hsv)
     colormap_vol = (1-vec[0,:,:]**2)*fake_rgb + 0.5*(vec[0,:,:]**2)
+
+
     colormap_vol = np.vstack((colormap_vol,np.ones_like(colormap_vol[0,:,:,:])[None,:]))
 
+    return colormap_vol
+
+def saveRgbaVolume(rgba,savePath=None):
+    
+    rgba = np.moveaxis(rgba,0,-1)
+    #  ParaView prefers to work with 8 bit uints
+    rgba = (rgba*255).astype(np.uint8)
+    # For some reason all colors are swapped in ParaView
+    rgba = 255-rgba
+    # ParaView needs a full range of values to work correctly
+    rgba[0,0,0,3] = 255
+    #Save as tiff
     if savePath is not None:
         assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
         _, ext = os.path.splitext(savePath)
-        assert ext == '.vtk', f"File extension ({ext}) is not .vtk"        
-        vtk_write_lite.save_rgba2vtk(colormap_vol, savePath)
+        assert ext == '.tiff', f"File extension ({ext}) is not .tiff"
 
-    return colormap_vol
+        #Switched to tiff save from vtk for faster visualization (vtk small for big volumes)
+        # vtk_write_lite.save_rgba2vtk(colormap_vol, savePath)
+        tifffile.imwrite(savePath, rgba)
+
+    # temp = np.moveaxis(colormap_vol.astype('float32'),0,-1)
+    # temp[:,:,:,:-1] = temp[:,:,:,:-1]*255
+    # temp[0,0,0,3] = 255
+    # temp[0,0,0,1] = 0
+    # tifffile.imwrite('temp.tiff', (temp).astype(np.uint8))
