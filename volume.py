@@ -50,7 +50,7 @@ def hsv2rgb3d(vol):
 
     return np.array([R,G,B])
 
-def convertToColormap(vec):
+def convertToColormap(vec, weights=None, mask=None):
     """Converts a volume of vectors to a volume of rgba values representing vector directions."""
 
     fake_hsv = np.arctan2(vec[1,:,:],vec[2,:,:])+np.pi
@@ -59,8 +59,14 @@ def convertToColormap(vec):
     fake_rgb = hsv2rgb3d(fake_hsv)
     colormap_vol = (1-vec[0,:,:]**2)*fake_rgb + 0.5*(vec[0,:,:]**2)
 
-
     colormap_vol = np.vstack((colormap_vol,np.ones_like(colormap_vol[0,:,:,:])[None,:]))
+
+    if weights is not None:
+        colormap_vol = colormap_vol*weights
+
+    if mask is not None:
+        mask_rgba = np.array((mask,mask,mask,mask))
+        colormap_vol[mask_rgba] = 0
 
     return colormap_vol
 
