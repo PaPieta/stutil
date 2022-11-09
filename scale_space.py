@@ -26,9 +26,11 @@ class ScaleSpace:
         """Fast and low memory scale space calculation by merging scales at each step. Returns only the most optimal solution.
         """
 
-        #initilaize arrays: eignevectors, eigenvalues and linearity score
+        #initilaize arrays: eignevectors, eigenvalues, linearity score and scale histograms
         valScale,vecScale, linScale = [np.empty((3,)+self.volume.shape, dtype=self.volume.dtype) for _ in range(3)]
         valFin,vecFin, linFin = [np.empty((3,)+self.volume.shape, dtype=self.volume.dtype) for _ in range(3)]
+        scaleHist = np.zeros((len(self.sigma_scales)+1,len(self.sigma_scales)), dtype=np.int32)
+        scaleHist[0,:] = np.array(self.sigma_scales)
         #array with original scale index used
         scaleIdx = np.zeros(self.volume.shape, dtype=np.int8)
         #array with boolean swap indices
@@ -52,11 +54,14 @@ class ScaleSpace:
                 vecFin[swapIdx] = vecScale[swapIdx]
                 linFin[swapIdx[0]] = linScale[swapIdx[0]]
                 scaleIdx[swapIdx[0]] = i
-            
+
+            _,counts = np.unique(scaleIdx,return_counts=True)
+            scaleHist[i+1,:i+1] = counts
+
             t1 = time.time()
             print(f"Scale {i} finished in {t1-t0}.")
 
         del valScale, vecScale, linScale, swapIdx
 
         print("Scale space calculation finished")
-        return valFin,vecFin,linFin,scaleIdx
+        return valFin,vecFin,linFin,scaleIdx,scaleHist
