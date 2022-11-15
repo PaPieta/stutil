@@ -10,7 +10,7 @@ class ScaleSpace:
         Params:\n
         volume - volume on which the structure tensor scale space should be calculated\n
         sigma_scales - values of the sigma parameter (noise scale)\n
-        rho_scales - values of the rho parameter (integration scale\n
+        rho_scales - values of the rho parameter (integration scale)\n
         """
         self.volume = np.asarray(volume)
         self.scales_num = len(sigma_scales)
@@ -29,8 +29,8 @@ class ScaleSpace:
         #initilaize arrays: eignevectors, eigenvalues, linearity score and scale histograms
         valScale,vecScale, linScale = [np.empty((3,)+self.volume.shape, dtype=self.volume.dtype) for _ in range(3)]
         valFin,vecFin, linFin = [np.empty((3,)+self.volume.shape, dtype=self.volume.dtype) for _ in range(3)]
-        scaleHist = np.zeros((len(self.sigma_scales)+1,len(self.sigma_scales)), dtype=np.int32)
-        scaleHist[0,:] = np.array(self.sigma_scales)
+        scaleHist = np.zeros((len(self.rho_scales)+1,len(self.rho_scales)), dtype=np.int32)
+        scaleHist[0,:] = np.array(self.rho_scales)
         #array with original scale index used
         scaleIdx = np.zeros(self.volume.shape, dtype=np.int8)
         #array with boolean swap indices
