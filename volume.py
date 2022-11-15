@@ -12,7 +12,7 @@ def hsv2rgb3d(vol):
     mod_res = ((vol[0,:,:,:]*180/(np.pi*60)))%2
     z = (M-m)*(1-np.abs(mod_res-1))
     
-    # Assuming H is in 0-180 range
+    # Assuming H is in 0-180 range (Not true anymore?)
     R = np.zeros_like(vol[0,:,:,:])
     G = np.zeros_like(vol[0,:,:,:])
     B = np.zeros_like(vol[0,:,:,:])
@@ -50,14 +50,18 @@ def hsv2rgb3d(vol):
 
     return np.array([R,G,B])
 
-def convertToColormap(vec, weights=None, mask=None):
+def convertToColormap(vec, halfSphere=False, weights=None, mask=None):
     """Converts a volume of vectors to a volume of rgba values representing vector directions."""
 
-    fake_hsv = np.arctan2(vec[1,:,:],vec[2,:,:])+np.pi
+    if halfSphere:
+        # Stretch artificially the x values to use all colors
+        fake_hsv = np.arctan2(vec[1,:,:],(vec[0,:,:]*2)-1)+np.pi
+    else:
+        fake_hsv = np.arctan2(vec[1,:,:],vec[0,:,:])+np.pi
     fake_hsv = np.array([fake_hsv,np.ones_like(fake_hsv),np.ones_like(fake_hsv)])
 
     fake_rgb = hsv2rgb3d(fake_hsv)
-    colormap_vol = (1-vec[0,:,:]**2)*fake_rgb + 0.5*(vec[0,:,:]**2)
+    colormap_vol = (1-vec[2,:,:]**2)*fake_rgb + 0.5*(vec[2,:,:]**2)
 
     colormap_vol = np.vstack((colormap_vol,np.ones_like(colormap_vol[0,:,:,:])[None,:]))
 

@@ -4,6 +4,8 @@ import numpy as np
 import os
 import vtk_write_lite
 
+import volume
+
 def cart2sph(cart):
     """Performs a conversion from carthesian to sperical coordinates, mimics matlab function with the same name\n
     Source:https://stackoverflow.com/questions/4116658/faster-numpy-cartesian-to-spherical-coordinate-conversion\n
@@ -18,17 +20,14 @@ def cart2sph(cart):
     sph[2,:] = np.arctan2(cart[1,:], cart[0,:])
     return sph
 
-def orientationVec(vec,poleOrder=[0,1,2],fullSphere=True, weights=None):
+def orientationVec(vec,fullSphere=True, weights=None):
     """Get spherical orientation (azimuth, elevation) from collection of unit direction
-    vectors mapped either onto a sphere or half sphere with a given poleOrder.\n
+    vectors mapped either onto a sphere or half sphere.\n
     Params:\n
     vec - (3,n) np.array with unit vectors\n
-    poleOrder - order of the poles in the vec parameter (eg [2,1,0] = [Z,Y,X])\n
     fullSphere - if True, returns complete sphere (redundant but nice looking), if False, returns half sphere\n
     weights - additional weights related to the vectors, carried over in case they need to be doubled when transitioning to fullSphere
     """
-    
-    vec = vec[poleOrder,:]
     
     sph = cart2sph(vec)
     
@@ -93,27 +92,42 @@ def histogram2d(sph:np.array, bins=[100,200], norm=None, weights=None):
 
     return H, el, az, binArea
 
-def save_glyph(H,el,az,savePath):
+def save_glyph(H,el,az,savePath,saveColor=True,flipColor=True):
     """Creates glyph-like mesh visualization from the 2d spherical coordinate eigenvector histogram\n
     Params\n
     H - histogram values\n
     el, az - binning limits in elevation and azimuth direction\n
-    savePath - path where the .vtk file of the glyph surface should be saved.
+    savePath - path where the .vtk file of the glyph surface should be saved.\n
+    saveColor - if True, adds color information to glyph directions
     """
 
     el_center = (el[1:]+el[:-1])/2
     az_center = (az[1:]+az[:-1])/2
     el_center_grid,az_center_grid = np.meshgrid(el_center,az_center)
-    x1 = H.transpose()*np.cos(el_center_grid)*np.cos(az_center_grid)
-    y1 = H.transpose()*np.cos(el_center_grid)*np.sin(az_center_grid)
-    z1 = H.transpose()*np.sin(el_center_grid)
+    x = np.cos(el_center_grid)*np.cos(az_center_grid)
+    y = np.cos(el_center_grid)*np.sin(az_center_grid)
+    z = np.sin(el_center_grid)
+    XYZ = np.array([x,y,z])
+    if saveColor:
+        XYZ_copy = np.copy(XYZ)
+        if flipColor:
+            # Flip to one half of the sphere, to have same colors on both sides
+            flipMask = XYZ_copy[0,:] < 0
+            flipMask = np.array([flipMask,flipMask,flipMask])
+            XYZ_copy[flipMask] = -XYZ_copy[flipMask]
 
+        RGB = volume.convertToColormap(np.expand_dims(XYZ_copy,-1),halfSphere=flipColor)[:3,:,:,0]
+        RGB = 1-RGB
+    else:
+        RGB = None
+    XYZ = XYZ*H.transpose()
+    
     # Save as vtk surf
     assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
     _, ext = os.path.splitext(savePath)
     assert ext == '.vtk', f"File extension ({ext}) is not .vtk"
 
-    vtk_write_lite.save_surf2vtk(savePath, x1, y1, z1)
+    vtk_write_lite.save_surf2vtk(savePath, XYZ, RGB)
     
     
     ### DISABLED MAYAVI VERSION AS IT REQUIRES OPENGL AND A DISPLAY - PROBLEMATIC WITH HPC
