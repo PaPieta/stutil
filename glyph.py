@@ -98,6 +98,7 @@ def save_glyph(H,el,az,savePath,saveColor=True,flipColor=True):
     H - histogram values\n
     el, az - binning limits in elevation and azimuth direction\n
     savePath - path where the .vtk file of the glyph surface should be saved.\n
+    normDiv - normalization value, what to divide the histogram values by\n
     saveColor - if True, adds color information to glyph directions
     """
 
@@ -116,7 +117,8 @@ def save_glyph(H,el,az,savePath,saveColor=True,flipColor=True):
             flipMask = np.array([flipMask,flipMask,flipMask])
             XYZ_copy[flipMask] = -XYZ_copy[flipMask]
 
-        RGB = volume.convertToColormap(np.expand_dims(XYZ_copy,-1),halfSphere=flipColor)[:3,:,:,0]
+        # RGB = volume.convertToFan(np.expand_dims(XYZ_copy,-1),halfSphere=flipColor)[:3,:,:,0]
+        RGB = volume.convertToIco(np.expand_dims(XYZ_copy,-1))[:3,:,:,0]
         RGB = 1-RGB
     else:
         RGB = None

@@ -2,6 +2,7 @@ import numpy as np
 import vtk_write_lite
 import os
 import tifffile
+import scmap
 
 #TODO: update documentation
 
@@ -50,7 +51,7 @@ def hsv2rgb3d(vol):
 
     return np.array([R,G,B])
 
-def convertToColormap(vec, halfSphere=False, weights=None, mask=None):
+def convertToFan(vec, halfSphere=False, weights=None, mask=None):
     """Converts a volume of vectors to a volume of rgba values representing vector directions."""
 
     if halfSphere:
@@ -62,6 +63,25 @@ def convertToColormap(vec, halfSphere=False, weights=None, mask=None):
 
     fake_rgb = hsv2rgb3d(fake_hsv)
     colormap_vol = (1-vec[2,:,:]**2)*fake_rgb + 0.5*(vec[2,:,:]**2)
+
+    colormap_vol = np.vstack((colormap_vol,np.ones_like(colormap_vol[0,:,:,:])[None,:]))
+
+    if weights is not None:
+        colormap_vol = colormap_vol*weights
+
+    if mask is not None:
+        mask_rgba = np.array((mask,mask,mask,mask))
+        colormap_vol[mask_rgba] = 0
+
+    return colormap_vol
+
+def convertToIco(vec,  weights=None, mask=None):
+    """Converts a volume of vectors to a volume of rgba values representing vector directions."""
+
+    coloring = scmap.Ico() 
+    vec_flip = np.moveaxis(vec.reshape(3,-1), 0,-1)
+    colormap_vol = coloring(vec_flip)
+    colormap_vol = np.moveaxis(colormap_vol,0,-1).reshape(vec.shape)
 
     colormap_vol = np.vstack((colormap_vol,np.ones_like(colormap_vol[0,:,:,:])[None,:]))
 
