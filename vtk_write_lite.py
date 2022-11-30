@@ -80,10 +80,11 @@ def save_rgba2vtk(volume, filename, origin=(0,0,0),
         np.savetxt(f,np.moveaxis(volume.reshape((4,-1)),0,1),fmt='%.4g', newline= '\n')
     
 def save_surf2vtk(filename, XYZ, RGB=None):
-    '''  Writes a vtk file for a 3D surface
+    '''  Writes a vtk file for a 3D surface with optional color information
     '''
-    indices = np.arange(XYZ[0,:,:].size).reshape(XYZ[0,:,:].shape)
-    vertices = np.moveaxis(np.reshape(XYZ,(3,-1)),0,-1)
+    XYZ_copy = XYZ[[2,1,0],:]
+    indices = np.arange(XYZ_copy[0,:,:].size).reshape(XYZ_copy[0,:,:].shape)
+    vertices = np.moveaxis(np.reshape(XYZ_copy,(3,-1)),0,-1)
     lu = indices[:-1,:-1]
     ru = indices[:-1,1:]
     rb = indices[1:,1:]
@@ -99,13 +100,13 @@ def save_surf2vtk(filename, XYZ, RGB=None):
         f.write('saved from matlab using save_surf2vtk\n')
         f.write('ASCII\n')
         f.write('DATASET POLYDATA\n')
-        f.write('POINTS {} float\n'.format(XYZ[0,:,:].size))
+        f.write('POINTS {} float\n'.format(XYZ_copy[0,:,:].size))
         np.savetxt(f, vertices, fmt='%.5g', newline='\n')
         f.write('POLYGONS {} {}\n'.format(nf,5*nf))
         np.savetxt(f, faces, fmt='%d', newline='\n')
 
         if RGB is not None:
-            f.write('POINT_DATA {} \n'.format(XYZ[0,:,:].size))
+            f.write('POINT_DATA {} \n'.format(XYZ_copy[0,:,:].size))
             f.write('COLOR_SCALARS label 3\n')
             np.savetxt(f, colors, fmt='%.5g', newline='\n')
 

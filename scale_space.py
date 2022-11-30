@@ -63,9 +63,9 @@ class ScaleSpace:
 
         del valScale, vecScale, linScale, swapIdx
 
-        # # Fix pole order from ZYX to XYZ
-        # valFin = valFin[[2,1,0],:]
-        # vecFin = vecFin[[2,1,0],:]
+        # Fix pole order from ZYX to XYZ TODO: check that
+        valFin = valFin[[2,1,0],:]
+        vecFin = vecFin[[2,1,0],:]
 
         print("Scale space calculation finished")
 
