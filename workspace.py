@@ -10,23 +10,24 @@ from stutil import volume
 
 if __name__ == "__main__":
 
-    file_path = '/zhome/5a/4/153708/2022_DANFIX_31_EXCHEQUER/analysis/processed_data/14-01-23_7012716-lfov/uint_8/vol_500cube.tiff'
-    run_name = '6_58_scales_sigma_x0_25_filledHole'
-    rho_scales = np.array([6,10,14,18,22,26,30,34,38,42,46,50,54,58])
-    sigma_scales = np.array([6,10,14,18,22,26,30,34,38,42,46,50,54,58])/4
+    file_path = '/zhome/5a/4/153708/2022_DANFIX_31_EXCHEQUER/analysis/processed_data/15-01-23_86072-lfov/uint_8/vol_500cube.tiff'
+    run_name = '2_26_scales_sigma_x0_33_normTrS_rhox1'
+    rho_scales = np.array([2,4,6,8,10,14,18,22,26])
+    sigma_scales = np.array([2,4,6,8,10,14,18,22,26])/3
     # run_name = 'hole_fill_test'
     # rho_scales = np.array([1,2])
     # sigma_scales = np.array([1,2])/4
+    scaleSpaceDiscr = "normTrS"
     glyph_full_sphere = True
     flipOpposites = True # If opposite directions should be flipped to the same direction
     detectAndFillHoles = True #If holes in the cheese should be detected and filled 
     cpu_num = 16
     block_size = 100
-    holeThresh = 5
+    holeThresh = 75
     minHoleSize = 50
 
-    I = skimage.io.imread(file_path)
-    I = (I.astype('float')/np.max(I))*255
+    I = skimage.io.imread(file_path).astype('float')
+    # I = (I.astype('float')/np.max(I))*255
     # I = I[:,200:400:,200:400].astype(float)
     print(f"Loaded image from: {file_path}")
     print(f"Image size: {I.shape}")
@@ -49,6 +50,14 @@ if __name__ == "__main__":
         f.write('\nSigma scales: ')
         f.write("".join([f'{str(i)} 'for i in sigma_scales]))
 
+        f.write(f'\n \n Scale space discriminator: {scaleSpaceDiscr}')
+        f.write(f'\nGlyph full sphere: {glyph_full_sphere}')
+        f.write(f'\nFlip opposites: {flipOpposites}')
+        f.write(f'\nCpu num: {cpu_num}')
+        f.write(f'\nDetect and fill holes: {block_size}')
+        f.write(f'\nHole intensity threshold: {holeThresh}')
+        f.write(f'\nHole size threshold: {minHoleSize}')
+
     print("Folder setup complete")
     
     if detectAndFillHoles:
@@ -56,7 +65,7 @@ if __name__ == "__main__":
     else:
         I_mask = np.ones(shape(I))
 
-    tensorScaleSpace = ScaleSpace(I,sigma_scales=sigma_scales,rho_scales=rho_scales,cpu_num=cpu_num,block_size=block_size)
+    tensorScaleSpace = ScaleSpace(I,sigma_scales=sigma_scales,rho_scales=rho_scales,discr=scaleSpaceDiscr,cpu_num=cpu_num,block_size=block_size)
 
     # Structure tensor scale space
     val,vec,lin,scale,scaleHist = tensorScaleSpace.calcFast()
