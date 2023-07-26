@@ -3,6 +3,7 @@ import os
 import tifffile
 import scmap
 import scipy.ndimage
+import maxflow
 
 from stutil import vtk_write_lite
 
@@ -139,13 +140,14 @@ def saveRgbaVolume(rgba,savePath):
 
     tifffile.imwrite(savePath, rgba)
 
-def holeFillGauss(vol, thresh=5, minBlobSize=50):
+def holeFillGauss(vol, thresh=5, minBlobSize=50, dilSize=5):
     """Finds and fills dark holes in the cheese volume using gaussian noise\n
     Gaussian distribution tries to follow the data distribution\n
     Params:\n
     vol - (x,y,z) grayscale volume \n
     thresh - binarization thershold for finding the holes\n
     minBlobSize - minimum hole size that will won't be filtered out\n
+    dilSize - dilation kernel size\n
     Returns: volume with filled holes, mask with the found holes set to 0
     """
 
@@ -157,6 +159,61 @@ def holeFillGauss(vol, thresh=5, minBlobSize=50):
     blobSize = scipy.ndimage.sum(holeMask,labels,np.arange(0,np.max(labels)).tolist())
     holeMask = np.isin(labels,np.where(blobSize > minBlobSize))
     #Small dilation to be safe
+    holeMask = scipy.ndimage.binary_dilation(holeMask, np.ones((dilSize,dilSize,dilSize)))
+
+    volMask = np.invert(holeMask)
+    # Prepeare gaussian param
+    volFilled = np.copy(vol)
+    std = np.std(vol[volMask])
+    mean = np.mean(vol[volMask])
+    num = np.sum(holeMask)
+    # Fill holes
+    volFilled[holeMask] = np.random.normal(mean,std,num)
+    
+    return volFilled, volMask
+
+def holeFillMrfGauss(vol, meanHole=100, meanObj=120, beta=5, minBlobSize=3000):
+    """Finds holes using 3D MRF egmentation and fills them using gaussian noise\n
+    Gaussian distribution tries to follow the data distribution\n
+    Params:\n
+    vol - (x,y,z) grayscale volume (float)\n
+    meanObj - mean pixel intensity of the segmented object\n
+    meanHole - mean pixel intensity of the holes\n
+    beta - MRF 2-clique potential parameter\n
+    minBlobSize - minimum hole size that will won't be filtered out\n
+    Returns: volume with filled holes, mask with the found holes set to 0
+    """
+
+    # Prepare cost volumes
+    mu = np.array([meanHole, meanObj])
+    U = np.stack([(vol-mu[i])**2 for i in range(len(mu))],axis=3)
+
+    #Prepare graph
+    g = maxflow.Graph[float]()
+    nodeids = g.add_grid_nodes(vol.shape)
+    g.add_grid_edges(nodeids, beta)
+    g.add_grid_tedges(nodeids, U[:,:,:,1], U[:,:,:,0])
+
+    # Solve
+    g.maxflow()
+    S = g.get_grid_segments(nodeids)
+    holeMask = 1-S
+
+    # 1st filter bobs by size
+    labels, num_labels = scipy.ndimage.label(holeMask)
+    blobSize = scipy.ndimage.sum(holeMask,labels,np.arange(0,np.max(labels)).tolist())
+    holeMask = np.isin(labels,np.where(blobSize > minBlobSize))
+
+    # Binary filtering 
+    holeMask = scipy.ndimage.binary_closing(holeMask, np.ones((3,3,3)))
+    holeMask = scipy.ndimage.binary_erosion(holeMask, np.ones((3,3,3)))
+
+    # Another filter by size
+    labels, num_labels = scipy.ndimage.label(holeMask)
+    blobSize = scipy.ndimage.sum(holeMask,labels,np.arange(0,np.max(labels)).tolist())
+    holeMask = np.isin(labels,np.where(blobSize > minBlobSize))
+
+    # Dilation to cover small neighbourhood of holes
     holeMask = scipy.ndimage.binary_dilation(holeMask, np.ones((5,5,5)))
 
     volMask = np.invert(holeMask)
