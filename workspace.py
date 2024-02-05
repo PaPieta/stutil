@@ -10,14 +10,16 @@ from stutil import volume
 
 if __name__ == "__main__":
 
-    file_path = '/zhome/5a/4/153708/2022_DANFIX_31_EXCHEQUER/analysis/processed_data/Cagliata/uint_8/vol_500cube.tiff'
-    run_name = '05_11_scales_rho_x1_eig_newSTV2'
-    rho_scales = np.array([0.5,1,1.5,2,3,4,5,6,7,9,11])*1
-    sigma_scales = np.array([0.5,1,1.5,2,3,4,5,6,7,9,11])
+    file_path = '/zhome/5a/4/153708/2022_DANFIX_31_EXCHEQUER/analysis/processed_scans/autumnBatch/36-2-22-3/uint_8/vol_500cube_smooth2sigma.tiff'
+    run_name = '2_14_scales_rho_x001_eig_newST_01_step'
+    # rho_scales = np.array([12])*0.001
+    # sigma_scales = np.array([12])
+    sigma_scales = np.arange(2,14.1,0.1)
+    rho_scales = sigma_scales*0.01
     # run_name = 'hole_fill_test'
-    # rho_scales = np.array([4])*1
-    # sigma_scales = np.array([4])
-    scaleSpaceDiscr = "eig"
+    # rho_scales = np.array([6])*0.01
+    # sigma_scales = np.array([6])
+    correctScale = False
     glyph_full_sphere = True
     flipOpposites = True # If opposite directions should be flipped to the same direction
     cpu_num = 16
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     minFatSize = 3000
 
     I = skimage.io.imread(file_path).astype('float')
-    # I = (I.astype('float')/np.max(I))*255
+    I = (I/np.max(I))
     # I = I[:,200:400:,200:400].astype(float)
     print(f"Loaded image from: {file_path}")
     print(f"Image size: {I.shape}")
@@ -61,7 +63,7 @@ if __name__ == "__main__":
         f.write('\nSigma scales: ')
         f.write("".join([f'{str(i)} 'for i in sigma_scales]))
 
-        f.write(f'\n\nScale space discriminator: {scaleSpaceDiscr}')
+        f.write(f'\n\nScale correction applied: {correctScale}')
         f.write(f'\nGlyph full sphere: {glyph_full_sphere}')
         f.write(f'\nFlip opposites: {flipOpposites}')
         f.write(f'\nCpu num: {cpu_num}')
@@ -92,11 +94,14 @@ if __name__ == "__main__":
 
     print("Mask prepared")
 
-    tensorScaleSpace = ScaleSpace(I,sigma_scales=sigma_scales,rho_scales=rho_scales,discr=scaleSpaceDiscr,cpu_num=cpu_num,block_size=block_size)
+    tensorScaleSpace = ScaleSpace(I,sigma_scales=sigma_scales,rho_scales=rho_scales,correctScale=correctScale,cpu_num=cpu_num,block_size=block_size)
 
     # Structure tensor scale space
     # val,vec,lin,scale,scaleHist = tensorScaleSpace.calcFast()
-    S,val,vec,lin,scale = tensorScaleSpace.calcFast()
+    S,val,vec,discr,scale = tensorScaleSpace.calcFast()
+
+    meanVal = np.mean(val, axis=0)
+    anis = np.sqrt(3/2) * np.sqrt((val[0]-meanVal)**2+(val[1]-meanVal)**2+(val[2]-meanVal)**2)/np.sqrt(val[0]**2+val[1]**2+val[2]**2)
 
     if flipOpposites:
         flipMask = vec[0,:] < 0
@@ -104,6 +109,7 @@ if __name__ == "__main__":
         vec[flipMask] = -vec[flipMask]
     # Save results
     np.save(os.path.join(run_result_path,'S.npy'), S.astype(np.float16))
+    np.save(os.path.join(run_result_path,'discr.npy'), S.astype(np.float16))
     np.save(os.path.join(run_result_path,'eigenvalues.npy'), val.astype(np.float16))
     np.save(os.path.join(run_result_path,'eigenvectors.npy'), vec.astype(np.float16))
     np.save(os.path.join(run_result_path,'scales.npy'), scale.astype(np.float16))
@@ -111,21 +117,21 @@ if __name__ == "__main__":
     if detectAndFillHoles:
         np.save(os.path.join(run_result_path,'holeMask.npy'), I_mask)
     # Save rgba volume
-    # rgba = volume.convertToColormap(vec, halfSphere=flipOpposites, weights=lin)
-    rgba = volume.convertToIco(vec,  weights=lin, mask=I_mask)
+    # rgba = volume.convertToColormap(vec, halfSphere=flipOpposites, weights=anis)
+    rgba = volume.convertToIco(vec,  weights=anis, mask=I_mask)
     volume.saveRgbaVolume(rgba,savePath=os.path.join(run_result_path,'rgbaWeighted.tiff'))
 
     print("RGBA direction volume saved.")
 
-    # Remove hole results from vec and lin
+    # Remove hole results from vec and anis
     I_mask3ch = np.array([I_mask, I_mask, I_mask])
     vec = vec[I_mask3ch].reshape(3,-1)
-    lin = lin[I_mask].ravel()
+    anis = anis[I_mask].ravel()
 
     # Create and save glyph
-    sph, sph_lin = glyph.orientationVec(vec, fullSphere=glyph_full_sphere, weights=lin)
+    sph, sph_anis = glyph.orientationVec(vec, fullSphere=glyph_full_sphere, weights=anis)
 
-    H, el, az, binArea = glyph.histogram2d(sph,bins=[100,200],norm='prob_binArea', weights=sph_lin)
+    H, el, az, binArea = glyph.histogram2d(sph,bins=[100,200],norm='prob_binArea', weights=sph_anis)
 
     glyph.save_glyph(H,el,az,np.array([0,0]),savePath=os.path.join(run_result_path,'glyph.vtk'), flipColor=flipOpposites)
 

@@ -8,7 +8,7 @@ from scipy import signal
 def getGaussNoNorm(t, kSize=5):
 
     s = np.sqrt(t)
-    x = np.arange(int(-np.ceil(s*kSize)), int(np.ceil(s*kSize))+1)
+    x = np.arange(int(-np.round(s*kSize)), int(np.round(s*kSize))+1)
     x = np.reshape(x,(-1,1))
     g = np.exp(-x**2/(2*t))
     return g
@@ -54,24 +54,27 @@ def structure_tensor_2d_new(image, sigma, rho, out=None, truncate=4.0):
         # S is already allocated. We assume the size is correct.
         S = out
 
-    # sigma2 = 0.707461 * (sigma* 2.75)
-    sigma2 = 1.0613 * (sigma)
+    sigma2 = 0.9506 * (sigma)
 
+    # Prepeare components for the ring filter.
     g1 = getGaussNoNorm(sigma2**2, kSize=4)
     g2 = getGaussNoNorm((sigma2*0.999)**2,kSize=4/0.999) 
-
-    norm = np.sum(signal.convolve(g1,g1.T)- signal.convolve(g2,g2.T))
+    
+    # Normalizing the ring filter.
+    norm = np.sum(g1-g2)
+    g1 = g1/norm
+    g2 = g2/norm
 
     # Integrate elements of structure tensor (Scipy uses sequence of 1D).
     tmp = np.empty(image.shape, dtype=image.dtype)
     np.multiply(Ix, Ix, out=tmp)
-    S[0] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))/norm
+    S[0] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))
     S[0] = filters.gaussian_filter(S[0], rho, mode='nearest', truncate=truncate)
     np.multiply(Iy, Iy, out=tmp)
-    S[1] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))/norm
+    S[1] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))
     S[1] = filters.gaussian_filter(S[1], rho, mode='nearest', truncate=truncate)
     np.multiply(Ix, Iy, out=tmp)
-    S[2] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))/norm
+    S[2] = (conv(conv(tmp,g1),g1.T) - conv(conv(tmp,g2),g2.T))
     S[2] = filters.gaussian_filter(S[2], rho, mode='nearest', truncate=truncate)
 
     # S = S*(sigma**(2*1.1))
@@ -120,44 +123,42 @@ def structure_tensor_3d_new(volume, sigma, rho, out=None, truncate=4.0):
         # S is already allocated. We assume the size is correct.
         S = out
 
-    # scaling = 1.77
-    # sigma2 = sigma*scaling
-    # sigma2 = 0.707461 * (sigma* 1.5)
-    sigma2 = 1.0613 * (sigma)
-
+    # Prepeare components for the ring filter.
+    sigma2 = 0.9506 * (sigma)
     g1 = getGaussNoNorm(sigma2**2, kSize=4)
     g2 = getGaussNoNorm((sigma2*0.999)**2,kSize=4/0.999)
-
-    # norm = 4*np.pi*(sigma*1.77)**2
-    # norm = 4*np.pi*(sigma2)**2
-    norm = np.sum(signal.convolve(signal.convolve(g1,g1.T)[:,:,None],g1.T[None,:]) - (signal.convolve(signal.convolve(g2,g2.T)[:,:,None],g2.T[None,:])))
+    
+    # Normalizing the ring filter.
+    norm = np.sum(g1-g2)
+    g1 = g1/norm
+    g2 = g2/norm
 
     # Integrating elements of structure tensor (scipy uses sequence of 1D).
     tmp = np.empty(volume.shape, dtype=volume.dtype)
     np.multiply(Vx, Vx, out=tmp)
-    S[0] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[0] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[0] = filters.gaussian_filter(S[0], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[0], truncate=truncate)
+    
     np.multiply(Vy, Vy, out=tmp)
-    S[1] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[1] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[1] = filters.gaussian_filter(S[1], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[1], truncate=truncate)
+    
     np.multiply(Vz, Vz, out=tmp)
-    S[2] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[2] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[2] = filters.gaussian_filter(S[2], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[2], truncate=truncate)
+    
     np.multiply(Vx, Vy, out=tmp)
-    S[3] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[3] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[3] = filters.gaussian_filter(S[3], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[3], truncate=truncate)
+    
     np.multiply(Vx, Vz, out=tmp)
-    S[4] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[4] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[4] = filters.gaussian_filter(S[4], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[4], truncate=truncate)
+    
     np.multiply(Vy, Vz, out=tmp)
-    S[5] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))/norm
+    S[5] = (conv(conv(conv(tmp,g1[:,:,None]),g1.T[:,:,None]),g1.T[None,:,:]) - conv(conv(conv(tmp,g2[:,:,None]),g2.T[:,:,None]),g2.T[None,:,:]))
     S[5] = filters.gaussian_filter(S[5], rho, mode='nearest', truncate=truncate)
-    # filters.gaussian_filter(tmp, rho, mode='nearest', output=S[5], truncate=truncate)
+    
 
     # S = S*(sigma**(2*1.1))
     S = S*(sigma**(2*1.2)+rho**2.5)
