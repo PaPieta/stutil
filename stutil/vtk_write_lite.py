@@ -9,10 +9,17 @@ Created on Tue Sep 17 16:06:05 2019
 
 import numpy as np
 import matplotlib.pyplot as plt
-    
-def save_gray2vtk(volume, filename, filetype='ASCII', origin=(0,0,0),
-                  spacing=(1,1,1), dataname='gray'):
-    ''' Writes a vtk file with grayscace volume data.
+
+
+def save_gray2vtk(
+    volume,
+    filename,
+    filetype="ASCII",
+    origin=(0, 0, 0),
+    spacing=(1, 1, 1),
+    dataname="gray",
+):
+    """Writes a vtk file with grayscace volume data.
     Arguments:
        volume: a grayscale volume, values will be saved as floats
        filename: filename with .vtk extension
@@ -22,34 +29,39 @@ def save_gray2vtk(volume, filename, filetype='ASCII', origin=(0,0,0),
        spacing: volume spacing, defaults to 1
        dataname: name associated with data (will be visible in Paraview)
     Author:vand@dtu.dk, 2019
-    '''
-    with open(filename, 'w') as f:
+    """
+    with open(filename, "w") as f:
         # writing header
-        f.write('# vtk DataFile Version 3.0\n')
-        f.write('saved from python using save_gray2vtk\n')
-        f.write('{}\n'.format(filetype))
-        f.write('DATASET STRUCTURED_POINTS\n')
-        f.write('DIMENSIONS {} {} {}\n'.format(\
-                volume.shape[2],volume.shape[1],volume.shape[0]))
-        f.write('ORIGIN {} {} {}\n'.format(origin[0],origin[1],origin[2]))
-        f.write('SPACING {} {} {}\n'.format(spacing[0],spacing[1],spacing[2]))
-        f.write('POINT_DATA {}\n'.format(volume.size))
-        f.write('SCALARS {} float 1\n'.format(dataname))
-        f.write('LOOKUP_TABLE default\n')
-        
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("saved from python using save_gray2vtk\n")
+        f.write("{}\n".format(filetype))
+        f.write("DATASET STRUCTURED_POINTS\n")
+        f.write(
+            "DIMENSIONS {} {} {}\n".format(
+                volume.shape[2], volume.shape[1], volume.shape[0]
+            )
+        )
+        f.write("ORIGIN {} {} {}\n".format(origin[0], origin[1], origin[2]))
+        f.write("SPACING {} {} {}\n".format(spacing[0], spacing[1], spacing[2]))
+        f.write("POINT_DATA {}\n".format(volume.size))
+        f.write("SCALARS {} float 1\n".format(dataname))
+        f.write("LOOKUP_TABLE default\n")
+
     # writing volume data
-    if filetype.upper()=='BINARY':
-        with open(filename, 'ab') as f:
-            volume = volume.astype('float32') # Pareview expects 4-bytes float 
-            volume.byteswap(True) # Paraview expects big-endian 
+    if filetype.upper() == "BINARY":
+        with open(filename, "ab") as f:
+            volume = volume.astype("float32")  # Pareview expects 4-bytes float
+            volume.byteswap(True)  # Paraview expects big-endian
             volume.tofile(f)
-    else: # ASCII
-        with open(filename, 'a') as f:
-            np.savetxt(f,volume.ravel(),fmt='%.5g', newline= ' ')
-    
-def save_rgba2vtk(volume, filename, origin=(0,0,0),
-                  spacing=(1,1,1), dataname='rgb'):
-    ''' Writes a vtk file with grayscace volume data.
+    else:  # ASCII
+        with open(filename, "a") as f:
+            np.savetxt(f, volume.ravel(), fmt="%.5g", newline=" ")
+
+
+def save_rgba2vtk(
+    volume, filename, origin=(0, 0, 0), spacing=(1, 1, 1), dataname="rgb"
+):
+    """Writes a vtk file with grayscace volume data.
     Arguments:
        volume: a grayscale volume, values will be saved as floats
        filename: filename with .vtk extension
@@ -59,88 +71,94 @@ def save_rgba2vtk(volume, filename, origin=(0,0,0),
        spacing: volume spacing, defaults to 1
        dataname: name associated with data (will be visible in Paraview)
     Author:vand@dtu.dk, 2019
-    '''
-    with open(filename, 'w') as f:
+    """
+    with open(filename, "w") as f:
         # writing header
-        f.write('# vtk DataFile Version 3.0\n')
-        f.write('saved from python using save_gray2vtk\n')
-        f.write('ASCII\n')
-        f.write('DATASET STRUCTURED_POINTS\n')
-        f.write('DIMENSIONS {} {} {}\n'.format(\
-                volume.shape[3],volume.shape[2],volume.shape[1]))
-        f.write('ORIGIN {} {} {}\n'.format(origin[0],origin[1],origin[2]))
-        f.write('SPACING {} {} {}\n'.format(spacing[0],spacing[1],spacing[2]))
-        f.write('POINT_DATA {}\n'.format(volume.shape[3]*volume.shape[2]*volume.shape[1]))
-        f.write('SCALARS {} float 4\n'.format(dataname))
-        f.write('LOOKUP_TABLE default\n')
-        
-    
-    volume[np.bitwise_and(volume<0.1, volume > 0)] = 0.1
-    with open(filename, 'a') as f:
-        np.savetxt(f,np.moveaxis(volume.reshape((4,-1)),0,1),fmt='%.4g', newline= '\n')
-    
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("saved from python using save_gray2vtk\n")
+        f.write("ASCII\n")
+        f.write("DATASET STRUCTURED_POINTS\n")
+        f.write(
+            "DIMENSIONS {} {} {}\n".format(
+                volume.shape[3], volume.shape[2], volume.shape[1]
+            )
+        )
+        f.write("ORIGIN {} {} {}\n".format(origin[0], origin[1], origin[2]))
+        f.write("SPACING {} {} {}\n".format(spacing[0], spacing[1], spacing[2]))
+        f.write(
+            "POINT_DATA {}\n".format(
+                volume.shape[3] * volume.shape[2] * volume.shape[1]
+            )
+        )
+        f.write("SCALARS {} float 4\n".format(dataname))
+        f.write("LOOKUP_TABLE default\n")
+
+    volume[np.bitwise_and(volume < 0.1, volume > 0)] = 0.1
+    with open(filename, "a") as f:
+        np.savetxt(
+            f, np.moveaxis(volume.reshape((4, -1)), 0, 1), fmt="%.4g", newline="\n"
+        )
+
+
 def save_surf2vtk(filename, XYZ, RGB=None):
-    '''  Writes a vtk file for a 3D surface with optional color information
-    '''
+    """Writes a vtk file for a 3D surface with optional color information"""
     # XYZ_copy = XYZ[[2,1,0],:]
     XYZ_copy = XYZ
 
-    indices = np.arange(XYZ_copy[0,:,:].size).reshape(XYZ_copy[0,:,:].shape)
-    vertices = np.moveaxis(np.reshape(XYZ_copy,(3,-1)),0,-1)
-    lu = indices[:-1,:-1]
-    ru = indices[:-1,1:]
-    rb = indices[1:,1:]
-    lb = indices[1:,:-1]
-    faces = np.c_[4*np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()]
+    indices = np.arange(XYZ_copy[0, :, :].size).reshape(XYZ_copy[0, :, :].shape)
+    vertices = np.moveaxis(np.reshape(XYZ_copy, (3, -1)), 0, -1)
+    lu = indices[:-1, :-1]
+    ru = indices[:-1, 1:]
+    rb = indices[1:, 1:]
+    lb = indices[1:, :-1]
+    faces = np.c_[4 * np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()]
     nf = faces.shape[0]
 
     if RGB is not None:
-        colors = np.moveaxis(RGB.reshape((3,-1)),0,-1)
-     
-    with open(filename, 'w') as f:
-        f.write('# vtk DataFile Version 3.0\n')
-        f.write('saved from matlab using save_surf2vtk\n')
-        f.write('ASCII\n')
-        f.write('DATASET POLYDATA\n')
-        f.write('POINTS {} float\n'.format(XYZ_copy[0,:,:].size))
-        np.savetxt(f, vertices, fmt='%.5g', newline='\n')
-        f.write('POLYGONS {} {}\n'.format(nf,5*nf))
-        np.savetxt(f, faces, fmt='%d', newline='\n')
+        colors = np.moveaxis(RGB.reshape((3, -1)), 0, -1)
+
+    with open(filename, "w") as f:
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("saved from matlab using save_surf2vtk\n")
+        f.write("ASCII\n")
+        f.write("DATASET POLYDATA\n")
+        f.write("POINTS {} float\n".format(XYZ_copy[0, :, :].size))
+        np.savetxt(f, vertices, fmt="%.5g", newline="\n")
+        f.write("POLYGONS {} {}\n".format(nf, 5 * nf))
+        np.savetxt(f, faces, fmt="%d", newline="\n")
 
         if RGB is not None:
-            f.write('POINT_DATA {} \n'.format(XYZ_copy[0,:,:].size))
-            f.write('COLOR_SCALARS label 3\n')
-            np.savetxt(f, colors, fmt='%.5g', newline='\n')
+            f.write("POINT_DATA {} \n".format(XYZ_copy[0, :, :].size))
+            f.write("COLOR_SCALARS label 3\n")
+            np.savetxt(f, colors, fmt="%.5g", newline="\n")
 
 
-def save_surf2vtk_old(filename, X,Y,Z):
-    '''  Writes a vtk file for a 3D surface
-    '''
+def save_surf2vtk_old(filename, X, Y, Z):
+    """Writes a vtk file for a 3D surface"""
     vertices = np.c_[X.ravel(), Y.ravel(), Z.ravel()]
     indices = np.arange(X.size).reshape(X.shape)
-    lu = indices[:-1,:-1]
-    ru = indices[:-1,1:]
-    rb = indices[1:,1:]
-    lb = indices[1:,:-1]
-    faces = np.c_[4*np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()]
+    lu = indices[:-1, :-1]
+    ru = indices[:-1, 1:]
+    rb = indices[1:, 1:]
+    lb = indices[1:, :-1]
+    faces = np.c_[4 * np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()]
     nf = faces.shape[0]
-    
-    with open(filename, 'w') as f:
-        f.write('# vtk DataFile Version 3.0\n')
-        f.write('saved from matlab using save_surf2vtk\n')
-        f.write('ASCII\n')
-        f.write('DATASET POLYDATA\n')
-        f.write('POINTS {} float\n'.format(X.size))
-        np.savetxt(f, vertices, fmt='%.5g', newline='\n')
-        f.write('POLYGONS {} {}\n'.format(nf,5*nf))
-        np.savetxt(f, faces, fmt='%d', newline='\n')
+
+    with open(filename, "w") as f:
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("saved from matlab using save_surf2vtk\n")
+        f.write("ASCII\n")
+        f.write("DATASET POLYDATA\n")
+        f.write("POINTS {} float\n".format(X.size))
+        np.savetxt(f, vertices, fmt="%.5g", newline="\n")
+        f.write("POLYGONS {} {}\n".format(nf, 5 * nf))
+        np.savetxt(f, faces, fmt="%d", newline="\n")
 
 
 def save_multSurf2vtk(filename, surfacesList):
-    '''  Writes a vtk file for multiple 3D surfaces
-    '''
+    """Writes a vtk file for multiple 3D surfaces"""
     # Check if color information should be added
-    if surfacesList[0].shape[0]>3:
+    if surfacesList[0].shape[0] > 3:
         writeColorData = True
         minList = []
         maxList = []
@@ -151,12 +169,12 @@ def save_multSurf2vtk(filename, surfacesList):
         maxVal = np.max(np.array(maxList))
         norm = plt.Normalize(minVal, maxVal)
 
-        colorsFull = np.empty((0,3))
+        colorsFull = np.empty((0, 3))
     else:
         writeColorData = False
 
-    verticesFull = np.empty((0,3))
-    facesFull = np.empty((0,5))
+    verticesFull = np.empty((0, 3))
+    facesFull = np.empty((0, 5))
     for i in range(len(surfacesList)):
         X = surfacesList[i][0]
         Y = surfacesList[i][1]
@@ -164,42 +182,40 @@ def save_multSurf2vtk(filename, surfacesList):
 
         vertices = np.c_[X.ravel(), Y.ravel(), Z.ravel()]
         indices = np.arange(X.size).reshape(X.shape)
-        lu = indices[:-1,:-1]
-        ru = indices[:-1,1:]
-        rb = indices[1:,1:]
-        lb = indices[1:,:-1]
-        faces = np.c_[4*np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()]
-        faces[:,1:] = faces[:,1:] + verticesFull.shape[0]
+        lu = indices[:-1, :-1]
+        ru = indices[:-1, 1:]
+        rb = indices[1:, 1:]
+        lb = indices[1:, :-1]
+        faces = np.c_[
+            4 * np.ones(lu.size), lu.ravel(), ru.ravel(), rb.ravel(), lb.ravel()
+        ]
+        faces[:, 1:] = faces[:, 1:] + verticesFull.shape[0]
 
-        verticesFull = np.vstack((verticesFull,vertices))
-        facesFull = np.vstack((facesFull,faces))
+        verticesFull = np.vstack((verticesFull, vertices))
+        facesFull = np.vstack((facesFull, faces))
 
         if writeColorData:
             colorData = surfacesList[i][3]
             # Get color in jet colormap
             colors = plt.cm.jet(norm(colorData))
             # Remove alpha channel and flatten
-            colors = colors[:,:,:3].reshape(-1,3)
+            colors = colors[:, :, :3].reshape(-1, 3)
 
-            colorsFull = np.vstack((colorsFull,colors))
+            colorsFull = np.vstack((colorsFull, colors))
 
     nf = facesFull.shape[0]
-     
-    with open(filename, 'w') as f:
-        f.write('# vtk DataFile Version 3.0\n')
-        f.write('saved from matlab using save_multSurf2vtk\n')
-        f.write('ASCII\n')
-        f.write('DATASET POLYDATA\n')
-        f.write('POINTS {} float\n'.format(verticesFull.shape[0]))
-        np.savetxt(f, verticesFull, fmt='%.5g', newline='\n')
-        f.write('POLYGONS {} {}\n'.format(nf,5*nf))
-        np.savetxt(f, facesFull, fmt='%d', newline='\n')
+
+    with open(filename, "w") as f:
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("saved from matlab using save_multSurf2vtk\n")
+        f.write("ASCII\n")
+        f.write("DATASET POLYDATA\n")
+        f.write("POINTS {} float\n".format(verticesFull.shape[0]))
+        np.savetxt(f, verticesFull, fmt="%.5g", newline="\n")
+        f.write("POLYGONS {} {}\n".format(nf, 5 * nf))
+        np.savetxt(f, facesFull, fmt="%d", newline="\n")
 
         if writeColorData:
-            f.write('POINT_DATA {} \n'.format(verticesFull.shape[0]))
-            f.write('COLOR_SCALARS label 3\n')
-            np.savetxt(f, colorsFull, fmt='%.5g', newline='\n')
-         
-
-
-
+            f.write("POINT_DATA {} \n".format(verticesFull.shape[0]))
+            f.write("COLOR_SCALARS label 3\n")
+            np.savetxt(f, colorsFull, fmt="%.5g", newline="\n")

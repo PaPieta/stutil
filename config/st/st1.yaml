@@ -1,0 +1,7 @@
+sigma_start: 1
+sigma_step: 0.5
+sigma_end: 4
+rho_enabled: False
+ring_filter: True
+gamma: 1.2
+correctScale: False

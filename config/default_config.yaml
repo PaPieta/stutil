@@ -1,0 +1,9 @@
+hydra:
+  job: 
+    chdir:  False
+defaults:
+    - _self_
+    - data: data1
+    - st: st1
+    - pre: pre1
+    - post: post1
