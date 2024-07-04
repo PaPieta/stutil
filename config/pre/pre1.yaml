@@ -1,9 +1,0 @@
-# Hole detection and filling
-detectAndFillHoles: False 
-holeThresh: 75
-minHoleSize: 50
-dilSize: 5
-fatMean: 100
-cheeseMean: 170
-mrfBeta: 5
-minFatSize: 3000
