@@ -10,10 +10,10 @@ from stutil import volume
 
 
 def cart2sph(cart):
-    """Performs a conversion from carthesian to sperical coordinates, mimics matlab function with the same name\n
-    Source:https://stackoverflow.com/questions/4116658/faster-numpy-cartesian-to-spherical-coordinate-conversion\n
-    Params:\n
-    cart - (3,n) np.array with cartesian coordinates\n
+    """Performs a conversion from carthesian to sperical coordinates, mimics matlab function with the same name
+    Source:https://stackoverflow.com/questions/4116658/faster-numpy-cartesian-to-spherical-coordinate-conversion
+    Params:
+    cart - (3,n) np.array with cartesian coordinates
     returns: (radius, elevation,azimuth)"""
     sph = np.zeros(cart.shape)
     xy = cart[0, :] ** 2 + cart[1, :] ** 2
@@ -27,9 +27,9 @@ def cart2sph(cart):
 
 
 def sph2cart(sph):
-    """Performs a conversion from sperical to cartesian coordinates, mimics matlab function with the same name\n
-    Source:https://se.mathworks.com/help/matlab/ref/sph2cart.html\n
-    Params:\n
+    """Performs a conversion from sperical to cartesian coordinates, mimics matlab function with the same name
+    Source:https://se.mathworks.com/help/matlab/ref/sph2cart.html
+    Params:
     sph - (radius, elevation,azimuth)\n
     returns: (3,n) np.array with cartesian coordinates (x,y,z)"""
     cart = np.zeros(sph.shape)
@@ -41,10 +41,10 @@ def sph2cart(sph):
 
 def orientationVec(vec, fullSphere=True, weights=None):
     """Get spherical orientation (azimuth, elevation) from collection of unit direction
-    vectors mapped either onto a sphere or half sphere.\n
-    Params:\n
-    vec - (3,n) np.array with unit vectors\n
-    fullSphere - if True, returns complete sphere (redundant but nice looking), if False, returns half sphere\n
+    vectors mapped either onto a sphere or half sphere.
+    Params:
+    vec - (3,n) np.array with unit vectors
+    fullSphere - if True, returns complete sphere (redundant but nice looking), if False, returns half sphere
     weights - additional weights related to the vectors, carried over in case they need to be doubled when transitioning to fullSphere
     """
 
@@ -56,9 +56,7 @@ def orientationVec(vec, fullSphere=True, weights=None):
         idxP = np.where(sph[2, :] > np.pi / 2)
 
         sph[2, idxN] = sph[2, idxN] + np.pi
-        sph[1, idxN] = -sph[
-            1, idxN
-        ]  # I think this is needed, HansMartin doesn't have that
+        sph[1, idxN] = -sph[1, idxN]  # I think this is needed, HansMartin doesn't have that
 
         sph[2, idxP] = sph[2, idxP] - np.pi
         sph[1, idxP] = -sph[1, idxP]
@@ -84,13 +82,13 @@ def orientationVec(vec, fullSphere=True, weights=None):
 
 
 def histogram2d(sph: np.array, bins=[100, 200], norm=None, weights=None):
-    """Wrapper to the numpy histogram 2d function with some extra steps.\n
-    Params:\n
-    sph - (3,n) spherical coordinates\n
-    bins - nuber of histogram bins in each direction\n
-    norm - normalization type:\n
-        'prob' - normalizes to 0-1 range\n
-        'binArea' - corrects for the variable bin area\n
+    """Wrapper to the numpy histogram 2d function with some extra steps.
+    Params:
+    sph - (3,n) spherical coordinates
+    bins - nuber of histogram bins in each direction
+    norm - normalization type:
+        'prob' - normalizes to 0-1 range
+        'binArea' - corrects for the variable bin area
         'prob_binArea' - combines both
     weights - additional weights for the histogram calculation (e.g. linearity score)
     """
@@ -120,16 +118,17 @@ def histogram2d(sph: np.array, bins=[100, 200], norm=None, weights=None):
     return H, el, az, binArea
 
 
-def save_glyph(H, el, az, rotAngle, savePath, saveColor=True, flipColor=True):
-    """Creates glyph-like mesh visualization from the 2d spherical coordinate eigenvector histogram\n
-    Params\n
-    H - histogram values\n
-    el, az - binning limits in elevation and azimuth direction\n
-    savePath - path where the .vtk file of the glyph surface should be saved.\n
-    normDiv - normalization value, what to divide the histogram values by\n
-    saveColor - if True, adds color information to glyph directions
+def generate_glyph(H, el, az, rotAngle, generateColor=True, flipColor=True):
+    """Creates glyph-like mesh visualization from the 2d spherical coordinate eigenvector histogram
+    Params
+    H - histogram values
+    el, az - binning limits in elevation and azimuth direction
+    normDiv - normalization value, what to divide the histogram values by
+    generateColor - if True, adds color information to glyph directions
+    Returns:
+    XYZ - (3,n) np.array with cartesian coordinates
+    RGB - (3,n) np.array with RGB color values
     """
-
     el_center = (el[1:] + el[:-1]) / 2
     az_center = (az[1:] + az[:-1]) / 2
 
@@ -159,7 +158,7 @@ def save_glyph(H, el, az, rotAngle, savePath, saveColor=True, flipColor=True):
     y = np.cos(el_center_grid) * np.sin(az_center_grid)
     z = np.sin(el_center_grid)
     XYZ = np.array([x.transpose(), y.transpose(), z.transpose()])
-    if saveColor:
+    if generateColor:
         XYZ_copy = np.copy(XYZ)
         if flipColor:
             # Flip to one half of the sphere, to have same colors on both sides
@@ -176,6 +175,16 @@ def save_glyph(H, el, az, rotAngle, savePath, saveColor=True, flipColor=True):
     # XYZ = np.moveaxis(XYZ,1,-1)
     XYZ = XYZ * H
 
+    return XYZ, RGB
+
+
+def save_glyph(XYZ, RGB, savePath):
+    """Saves glyph in a VTK format based on the given mesh and optional color information
+    Params:
+    XYZ - (3,n) np.array with cartesian coordinates
+    RGB - (3,n) np.array with RGB color values
+    savePath - path to save the glyph
+    """
     # Save as vtk surf
     assert os.path.dirname(savePath) == "" or os.path.exists(
         os.path.dirname(savePath)
@@ -184,25 +193,3 @@ def save_glyph(H, el, az, rotAngle, savePath, saveColor=True, flipColor=True):
     assert ext == ".vtk", f"File extension ({ext}) is not .vtk"
 
     vtk_write_lite.save_surf2vtk(savePath, XYZ, RGB)
-
-    ### DISABLED MAYAVI VERSION AS IT REQUIRES OPENGL AND A DISPLAY - PROBLEMATIC WITH HPC
-    # if not plot:
-    #     mlab.options.offscreen = True
-    # surf = mlab.mesh(x1,y1,z1,scalars=H.transpose())
-    # if plot:
-    #     mlab.show()
-
-    # if savePath is not None:
-    #     assert os.path.dirname(savePath) == '' or os.path.exists(os.path.dirname(savePath)), f"Given path does not exist {savePath}"
-    #     _, ext = os.path.splitext(savePath)
-    #     assert ext == '.stl', f"File extension ({ext}) is not .stl"
-
-    #     surface_vtk = mlab.pipeline.get_vtk_src(surf)
-    #     stlWriter = vtk.vtkSTLWriter()
-    #     # Set the file name
-    #     stlWriter.SetFileName(savePath)
-    #     # Set the input for the stl writer. surface.output[0]._vtk_obj is a polydata object
-    #     stlWriter.SetInputData(surface_vtk[0]._vtk_obj)
-    #     stlWriter.Write()
-
-    # return surf

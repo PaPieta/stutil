@@ -7,10 +7,10 @@ import maxflow
 
 
 def hsv2rgb3d(vol):
-    """Converts a volume from a hsv to rgb definition, extension of the 2D version\n
-    Source:https://www.had2know.org/technology/hsv-rgb-conversion-formula-calculator.html\n
-    Params:\n
-    vol - (3,x,y,z) color (hsv) volume\n
+    """Converts a volume from a hsv to rgb definition, extension of the 2D version
+    Source:https://www.had2know.org/technology/hsv-rgb-conversion-formula-calculator.html
+    Params:
+    vol - (3,x,y,z) color (hsv) volume
     Returns: (3,x,y,z) rgb volume"""
     #
     M = vol[2, :, :, :]
@@ -62,14 +62,14 @@ def hsv2rgb3d(vol):
 
 
 def convertToFan(vec, halfSphere=False, weights=None, mask=None):
-    """Converts a volume of vectors to a volume of rgba values representing vector directions using a Fan color scheme.\n
-    Useful for vectors that don't point up or down.\n
-    Params:\n
-    vec - (3,x,y,z) volume of vectors\n
-    halfSphere - if True, the color range is squished to half a sphere\n
-    weights - weights used for the alpha channel\n
-    mask - binary mask of areas of interest\n
-    Returns: (4,x,y,z) rgba volume\n
+    """Converts a volume of vectors to a volume of rgba values representing vector directions using a Fan color scheme.
+    Useful for vectors that don't point up or down.
+    Params:
+    vec - (3,x,y,z) volume of vectors
+    halfSphere - if True, the color range is squished to half a sphere
+    weights - weights used for the alpha channel
+    mask - binary mask of areas of interest
+    Returns: (4,x,y,z) rgba volume
     """
 
     if halfSphere:
@@ -97,13 +97,13 @@ def convertToFan(vec, halfSphere=False, weights=None, mask=None):
 
 
 def convertToIco(vec, weights=None, mask=None):
-    """Converts a volume of vectors to a volume of rgba values representing vector directions using an Icosahedron color scheme.\n
-    Useful for vectors that don't have any particular distribution.\n
-    Params:\n
-    vec - (3,x,y,z) volume of vectors\n
-    weights - weights used for the alpha channel\n
-    mask - binary mask of areas of interest\n
-    Returns: (4,x,y,z) rgba volume\n
+    """Converts a volume of vectors to a volume of rgba values representing vector directions using an Icosahedron color scheme.
+    Useful for vectors that don't have any particular distribution.
+    Params:
+    vec - (3,x,y,z) volume of vectors
+    weights - weights used for the alpha channel
+    mask - binary mask of areas of interest
+    Returns: (4,x,y,z) rgba volume
     """
 
     coloring = scmap.Ico()
@@ -126,11 +126,11 @@ def convertToIco(vec, weights=None, mask=None):
 
 
 def saveRgbaVolume(rgba, savePath):
-    """Prepares and saves RGBA .tiff volume to be viewed in ParaView\n
-    Due to ParaView behaviour that this function corrects for, it may not perfrom as well in other programs\n
-    Params:\n
-    rgba - (4,x,y,z) rgba volume \n
-    savePath - path where the volume should be saved\n
+    """Prepares and saves RGBA .tiff volume to be viewed in ParaView
+    Due to ParaView behaviour that this function corrects for, it may not perfrom as well in other programs
+    Params:
+    rgba - (4,x,y,z) rgba volume 
+    savePath - path where the volume should be saved
     """
 
     rgba = np.moveaxis(rgba, 0, -1)
@@ -152,13 +152,13 @@ def saveRgbaVolume(rgba, savePath):
 
 
 def holeFillGauss(vol, thresh=5, minBlobSize=50, dilSize=5):
-    """Finds and fills dark holes in the cheese volume using gaussian noise\n
-    Gaussian distribution tries to follow the data distribution\n
-    Params:\n
-    vol - (x,y,z) grayscale volume \n
-    thresh - binarization thershold for finding the holes\n
-    minBlobSize - minimum hole size that will won't be filtered out\n
-    dilSize - dilation kernel size\n
+    """Finds and fills dark holes in the cheese volume using gaussian noise
+    Gaussian distribution tries to follow the data distribution
+    Params:
+    vol - (x,y,z) grayscale volume 
+    thresh - binarization thershold for finding the holes
+    minBlobSize - minimum hole size that will won't be filtered out
+    dilSize - dilation kernel size
     Returns: volume with filled holes, mask with the found holes set to 0
     """
 
@@ -189,14 +189,14 @@ def holeFillGauss(vol, thresh=5, minBlobSize=50, dilSize=5):
 
 
 def holeFillMrfGauss(vol, meanHole=100, meanObj=120, beta=5, minBlobSize=3000):
-    """Finds holes using 3D MRF egmentation and fills them using gaussian noise\n
-    Gaussian distribution tries to follow the data distribution\n
-    Params:\n
-    vol - (x,y,z) grayscale volume (float)\n
-    meanObj - mean pixel intensity of the segmented object\n
-    meanHole - mean pixel intensity of the holes\n
-    beta - MRF 2-clique potential parameter\n
-    minBlobSize - minimum hole size that will won't be filtered out\n
+    """Finds holes using 3D MRF egmentation and fills them using gaussian noise
+    Gaussian distribution tries to follow the data distribution
+    Params:
+    vol - (x,y,z) grayscale volume (float)
+    meanObj - mean pixel intensity of the segmented object
+    meanHole - mean pixel intensity of the holes
+    beta - MRF 2-clique potential parameter
+    minBlobSize - minimum hole size that will won't be filtered out
     Returns: volume with filled holes, mask with the found holes set to 0
     """
 

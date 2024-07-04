@@ -36,5 +36,6 @@ setup(
         "scikit-image",
         "matplotlib",
         "scmap",
+        "ipympl"
     ],
 )
