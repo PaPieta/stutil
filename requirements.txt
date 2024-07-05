@@ -1,0 +1,10 @@
+matplotlib
+numpy
+PyMaxflow
+scipy
+scikit-image
+structure-tensor
+scmap
+setuptools
+tifffile
+ipympl
