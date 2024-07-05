@@ -1,0 +1,7 @@
+matplotlib
+numpy
+PyMaxflow
+scipy
+scmap
+setuptools
+tifffile
