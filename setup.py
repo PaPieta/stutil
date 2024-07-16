@@ -31,12 +31,9 @@ setup(
     install_requires=[
         "numpy",
         "scipy",
-        "structure-tensor",
         "tifffile",
-        "scikit-image",
         "matplotlib",
         "scmap",
         "PyMaxflow",
-        "ipympl"
     ],
 )
