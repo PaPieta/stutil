@@ -61,16 +61,20 @@ def hsv2rgb3d(vol):
     return np.array([R, G, B])
 
 
-def convertToFan(vec, halfSphere=False, weights=None, mask=None):
+def convertToFan(vec, flipOrder=True, halfSphere=False, weights=None, mask=None):
     """Converts a volume of vectors to a volume of rgba values representing vector directions using a Fan color scheme.
     Useful for vectors that don't point up or down.
     Params:
     vec - (3,x,y,z) volume of vectors
+    flipOrder - if True, vec is flipped to (ZYX) order instead of (XYZ) to follow most visualization software 
     halfSphere - if True, the color range is squished to half a sphere
     weights - weights used for the alpha channel
     mask - binary mask of areas of interest
     Returns: (4,x,y,z) rgba volume
     """
+
+    if flipOrder:
+        vec = vec[[2, 1, 0], :]
 
     if halfSphere:
         # Stretch artificially the x values to use all colors
@@ -96,15 +100,19 @@ def convertToFan(vec, halfSphere=False, weights=None, mask=None):
     return colormap_vol
 
 
-def convertToIco(vec, weights=None, mask=None):
+def convertToIco(vec, flipOrder=True, weights=None, mask=None):
     """Converts a volume of vectors to a volume of rgba values representing vector directions using an Icosahedron color scheme.
     Useful for vectors that don't have any particular distribution.
     Params:
     vec - (3,x,y,z) volume of vectors
+    flipOrder - if True, vec is flipped to (ZYX) order instead of (XYZ) to follow most visualization software 
     weights - weights used for the alpha channel
     mask - binary mask of areas of interest
     Returns: (4,x,y,z) rgba volume
     """
+
+    if flipOrder:
+        vec = vec[[2, 1, 0], :]
 
     coloring = scmap.Ico()
     vec_flip = np.moveaxis(vec.reshape(3, -1), 0, -1)

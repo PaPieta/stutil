@@ -39,14 +39,18 @@ def sph2cart(sph):
     return cart
 
 
-def orientationVec(vec, fullSphere=True, weights=None):
+def orientationVec(vec, flipOrder=True, fullSphere=True, weights=None):
     """Get spherical orientation (azimuth, elevation) from collection of unit direction
     vectors mapped either onto a sphere or half sphere.
     Params:
     vec - (3,n) np.array with unit vectors
+    flipOrder - if True, vec is flipped to (ZYX) order instead of (XYZ) to follow most visualization software
     fullSphere - if True, returns complete sphere (redundant but nice looking), if False, returns half sphere
     weights - additional weights related to the vectors, carried over in case they need to be doubled when transitioning to fullSphere
     """
+
+    if flipOrder:
+        vec = vec[[2, 1, 0], :]
 
     sph = cart2sph(vec)
 
